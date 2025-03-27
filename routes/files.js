@@ -11,8 +11,11 @@ router.get('/files', fileController.getAllFiles);
 // Get single file route
 router.get('/files/:id', fileController.getFile);
 
-// ✅ Add the download route **before** exporting
+// Download file route
 router.get('/download/:id', fileController.downloadFile);
+
+// ✅ Delete file route
+router.delete('/files/:id', fileController.deleteFile);
 
 // ✅ Export after defining all routes
 module.exports = router;

@@ -97,7 +97,7 @@ exports.getFile = async (req, res) => {
   }
 };
 
-// ✅ Separate download function
+// ✅ Download file function
 exports.downloadFile = async (req, res) => {
     try {
         const client = new MongoClient(process.env.MONGO_URI);
@@ -119,6 +119,40 @@ exports.downloadFile = async (req, res) => {
         downloadStream.pipe(res);
 
         downloadStream.on('end', () => client.close());
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+// ✅ Delete file function
+exports.deleteFile = async (req, res) => {
+    try {
+        const client = new MongoClient(process.env.MONGO_URI);
+        await client.connect();
+        const db = client.db();
+        const bucket = new GridFSBucket(db, { bucketName: 'uploads' });
+
+        let fileId;
+        try {
+            fileId = new ObjectId(req.params.id);
+        } catch (err) {
+            client.close();
+            return res.status(400).json({ error: 'Invalid file ID format' });
+        }
+
+        // Check if file exists
+        const file = await db.collection('uploads.files').findOne({ _id: fileId });
+        if (!file) {
+            client.close();
+            return res.status(404).json({ error: 'File not found' });
+        }
+
+        // Delete file from GridFS
+        await bucket.delete(fileId);
+
+        client.close();
+        res.status(200).json({ message: 'File deleted successfully' });
 
     } catch (err) {
         res.status(500).json({ error: err.message });
