@@ -1,4 +1,4 @@
-const { MongoClient, GridFSBucket } = require('mongodb');
+const { MongoClient, GridFSBucket, ObjectId } = require('mongodb');
 const multer = require('multer');
 const path = require('path');
 const crypto = require('crypto');
@@ -79,7 +79,7 @@ exports.getFile = async (req, res) => {
     const bucket = new GridFSBucket(db, { bucketName: 'uploads' });
     
     const file = await db.collection('uploads.files').findOne({ 
-      _id: new require('mongodb').ObjectId(req.params.id) 
+      _id: new ObjectId(req.params.id)
     });
     
     if (!file) {
@@ -95,4 +95,32 @@ exports.getFile = async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+};
+
+// ✅ Separate download function
+exports.downloadFile = async (req, res) => {
+    try {
+        const client = new MongoClient(process.env.MONGO_URI);
+        await client.connect();
+        const db = client.db();
+        const bucket = new GridFSBucket(db, { bucketName: 'uploads' });
+
+        const file = await db.collection('uploads.files').findOne({ _id: new ObjectId(req.params.id) });
+
+        if (!file) {
+            client.close();
+            return res.status(404).json({ error: 'File not found' });
+        }
+
+        res.setHeader('Content-Disposition', `attachment; filename="${file.filename}"`);
+        res.setHeader('Content-Type', file.metadata.mimetype || 'application/octet-stream');
+
+        const downloadStream = bucket.openDownloadStream(file._id);
+        downloadStream.pipe(res);
+
+        downloadStream.on('end', () => client.close());
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 };
