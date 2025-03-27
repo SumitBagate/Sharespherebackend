@@ -27,7 +27,7 @@ const fileFilter = (req, file, cb) => {
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error('Invalid file type. Only images, PDFs, and documents are allowed.'), false);
+    cb(new Error('Invalid file type. Only images, PDFs, and documents are allowed.'), false); 
   }
 };
 
