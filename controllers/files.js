@@ -27,8 +27,7 @@ exports.uploadFile = [
       const bucket = new GridFSBucket(db, { bucketName: 'uploads' });
 
       // Generate unique filename
-      const filename = crypto.randomBytes(16).toString('hex') + 
-                       path.extname(req.file.originalname);
+      const filename = crypto.randomBytes(16).toString('hex') + path.extname(req.file.originalname);
 
       // Create upload stream
       const uploadStream = bucket.openUploadStream(filename, {
@@ -42,7 +41,7 @@ exports.uploadFile = [
       // Pipe file data
       uploadStream.end(req.file.buffer);
 
-      uploadStream.on('finish', () => {
+      uploadStream.once('finish', () => {
         client.close();
         res.status(201).json({
           message: 'File uploaded successfully',
@@ -51,7 +50,7 @@ exports.uploadFile = [
         });
       });
 
-      uploadStream.on('error', (err) => {
+      uploadStream.once('error', (err) => {
         console.error('Upload Error:', err);
         res.status(500).json({ error: 'File upload failed' });
         client.close();
@@ -81,7 +80,7 @@ exports.getAllFiles = async (req, res) => {
 };
 
 // ✅ Preview File (Inline Display)
-exports.getFile = async (req, res) => {
+exports.previewFile = async (req, res) => {
   let client;
   try {
     client = new MongoClient(process.env.MONGO_URI);
@@ -89,9 +88,7 @@ exports.getFile = async (req, res) => {
     const db = client.db();
     const bucket = new GridFSBucket(db, { bucketName: 'uploads' });
 
-    const file = await db.collection('uploads.files').findOne({
-      _id: new ObjectId(req.params.id)
-    });
+    const file = await db.collection('uploads.files').findOne({ _id: new ObjectId(req.params.id) });
 
     if (!file) {
       client.close();
@@ -105,13 +102,13 @@ exports.getFile = async (req, res) => {
     const downloadStream = bucket.openDownloadStream(file._id);
     downloadStream.pipe(res);
 
-    downloadStream.on('error', (err) => {
+    downloadStream.once('error', (err) => {
       console.error('Preview error:', err);
       res.status(500).json({ error: 'Preview failed' });
       client.close();
     });
 
-    downloadStream.on('end', () => client.close());
+    downloadStream.once('end', () => client.close());
 
   } catch (err) {
     if (client) client.close();
@@ -141,13 +138,13 @@ exports.downloadFile = async (req, res) => {
     const downloadStream = bucket.openDownloadStream(file._id);
     downloadStream.pipe(res);
 
-    downloadStream.on('error', (err) => {
+    downloadStream.once('error', (err) => {
       console.error('Download error:', err);
       res.status(500).json({ error: 'Download failed' });
       client.close();
     });
 
-    downloadStream.on('end', () => client.close());
+    downloadStream.once('end', () => client.close());
 
   } catch (err) {
     if (client) client.close();
