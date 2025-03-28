@@ -63,19 +63,47 @@ exports.uploadFile = [
   }
 ];
 
-// ✅ Get All Files
+// Get All Files
+const File = require('../models/File');
+
 exports.getAllFiles = async (req, res) => {
+  try {
+    const files = await File.find();
+    res.json(files);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+// ✅ Get a Single File by ID
+exports.getFile = async (req, res) => {
   let client;
   try {
     client = new MongoClient(process.env.MONGO_URI);
     await client.connect();
     const db = client.db();
-    const files = await db.collection('uploads.files').find().toArray();
-    res.json(files);
+    const bucket = new GridFSBucket(db, { bucketName: 'uploads' });
+
+    const file = await db.collection('uploads.files').findOne({ _id: new ObjectId(req.params.id) });
+
+    if (!file) {
+      client.close();
+      return res.status(404).json({ error: 'File not found' });
+    }
+
+    res.json({
+      id: file._id,
+      filename: file.filename,
+      originalName: file.metadata.originalName,
+      size: file.metadata.size,
+      mimetype: file.metadata.mimetype,
+      uploadDate: file.uploadDate
+    });
+
+    client.close();
   } catch (err) {
-    res.status(500).json({ error: err.message });
-  } finally {
     if (client) client.close();
+    res.status(500).json({ error: err.message });
   }
 };
 
@@ -95,7 +123,6 @@ exports.previewFile = async (req, res) => {
       return res.status(404).json({ error: 'File not found' });
     }
 
-    // ✅ Set headers for inline preview
     res.setHeader('Content-Type', file.metadata.mimetype || 'application/octet-stream');
     res.setHeader('Content-Disposition', 'inline');
 

@@ -1,24 +1,13 @@
 const express = require('express');
 const router = express.Router();
-const fileController = require('../controllers/files');
+const fileController = require('../controllers/files'); // Ensure the correct path
 
-// Upload file route
+// Define routes and link them to the controller functions
 router.post('/upload', fileController.uploadFile);
-
-// Get all files route
-router.get('/files', fileController.getAllFiles);
-
-// Get single file route
-router.get('/files/:id', fileController.getFile);
-
-// Download file route
+router.get('/all', fileController.getAllFiles);
 router.get('/download/:id', fileController.downloadFile);
-
-// Preview file route
 router.get('/preview/:id', fileController.previewFile);
+router.get('/:id', fileController.getFile); // This was failing before because getFile was missing
+router.delete('/:id', fileController.deleteFile);
 
-// ✅ Delete file route
-router.delete('/files/:id', fileController.deleteFile);
-
-// ✅ Export after defining all routes
 module.exports = router;
