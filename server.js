@@ -7,9 +7,6 @@ const mongoose = require('mongoose');
 const fileRoutes = require('./routes/files'); // Ensure correct import
 const likeCommentRoutes = require('./routes/likecomment.js'); // Ensure correct import
 
-// console.log('fileRoutes:', fileRoutes);
-// console.log('likeCommentRoutes:', likeCommentRoutes);
-
 const app = express();
 
 // Middleware
@@ -36,11 +33,13 @@ connectDB().then(() => {
     });
   });
 
-  const PORT = process.env.PORT || 5001;
-  app.listen(PORT, () => {
+  // ✅ Set PORT Correctly for Render Deployment
+  const PORT = process.env.PORT || 10000; // Ensure it matches Render logs
+  app.listen(PORT, '0.0.0.0', () => { // Bind to 0.0.0.0 for Render
     console.log(`Server running on port ${PORT}`);
-    console.log(`Upload endpoint: POST http://localhost:${PORT}/api/upload`);
+    console.log(`Upload endpoint: POST https://sharespherebackend.onrender.com/api/upload`);
   });
+
 }).catch(err => {
   console.error('Server startup failed:', err);
   process.exit(1);
