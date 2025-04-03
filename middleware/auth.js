@@ -1,27 +1,55 @@
-// middleware/auth.js
-const jwt = require('jsonwebtoken');
+const express = require("express");
+const router = express.Router();
+const admin = require("firebase-admin");
+const User = require("../models/User");
 
-module.exports = function(req, res, next) {
+// Middleware to verify Firebase token
+const verifyToken = async (req, res, next) => {
   try {
-    // Get token from header
-    const token = req.header('x-auth-token');
-    
-    // Check if no token
-    if (!token) {
-      return res.status(401).json({ 
-        success: false,
-        error: 'No token, authorization denied' 
-      });
-    }
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "Unauthorized" });
 
-    // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded.user;
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    req.user = decodedToken;
     next();
-  } catch (err) {
-    res.status(401).json({ 
-      success: false,
-      error: 'Token is not valid' 
-    });
+  } catch (error) {
+    res.status(401).json({ error: "Invalid or expired token" });
   }
 };
+
+// Sign in & Create User
+
+router.post("/signin", async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(" ")[1]; 
+    if (!token) return res.status(401).json({ error: "Token required" });
+
+    // Verify Firebase ID Token
+    const decodedToken = await admin.auth().verifyIdToken(token);
+    const { uid, email } = decodedToken;
+
+    // Check if user exists in MongoDB
+    let user = await User.findOne({ firebaseUID: uid });
+
+    if (!user) {
+      // Create new user with default credits = 10
+      user = new User({
+        email,
+        firebaseUID: uid,
+        uploadedFiles: [],
+        downloadedFiles: [],
+        credits: 10,
+      });
+
+      await user.save();
+    }
+
+    res.json({ message: "User authenticated", user });
+  } catch (error) {
+    console.error("Auth Error:", error);
+    res.status(401).json({ error: "Invalid or expired token" });
+  }
+});
+
+module.exports = router;
+
