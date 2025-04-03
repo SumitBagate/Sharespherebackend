@@ -7,3 +7,6 @@ logs/
 
 # Ignore environment variables file
 .env
+
+# Ignore sensitive files
+config/serviceAccountKey.json
