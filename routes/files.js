@@ -1,6 +1,6 @@
 const express = require("express");
 const multer = require("multer");
-const authenticateUser = require("../middleware/authenticateUser");
+const authenticateUser = require("../middleware/auth");
 const ensureUserExists = require("../middleware/ensureUserExist");
 const {
     uploadFile,
