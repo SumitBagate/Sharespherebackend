@@ -2,7 +2,6 @@ const express = require("express");
 const router = express.Router();
 const admin = require("firebase-admin");
 const User = require("../models/User");
-
 // Middleware to verify Firebase token
 const verifyToken = async (req, res, next) => {
   try {
