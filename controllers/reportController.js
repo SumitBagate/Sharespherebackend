@@ -1,6 +1,7 @@
 const File = require("../models/File");
 const User = require("../models/User");
-
+const mongoose = require("mongoose");
+const Transaction = require("../models/Transcation");
 // Controller to report an issue for a downloaded file
 const reportIssue = async (req, res) => {
     try {
